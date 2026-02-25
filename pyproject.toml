@@ -1,0 +1,10 @@
+[project]
+name = "server-vibes-check"
+version = "0.1.0"
+description = "Server vibes check"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "psutil>=7.2.1",
+    "schedule>=1.2.2",
+]
