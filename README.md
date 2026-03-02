@@ -1,5 +1,7 @@
 # Server Vibes Check
 
+I wrote this as a practical way to explore the kind of tooling that keeps a small server healthy without needing a full monitoring stack. The problem I was solving was straightforward but real: I wanted one simple place to check disk usage, CPU pressure, and service health, then raise a flag before a small issue turned into downtime.
+
 <!--
 Lame? Mostly yes — disk check, service status, restart, and scheduling are all trivially doable in    
   bash. The main argument for Python here is psutil for CPU (more reliable than parsing top)
