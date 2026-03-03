@@ -2,15 +2,6 @@
 
 I wrote this as a practical way to explore the kind of tooling that keeps a small server healthy without needing a full monitoring stack. The problem I was solving was straightforward but real: I wanted one simple place to check disk usage, CPU pressure, and service health, then raise a flag before a small issue turned into downtime.
 
-<!--
-Lame? Mostly yes — disk check, service status, restart, and scheduling are all trivially doable in    
-  bash. The main argument for Python here is psutil for CPU (more reliable than parsing top)
-  and structured/testable code. It's not wrong to use Python, just a bit
-  heavyweight for what it does.
--->
-
-A Python server monitor. Checks disk usage, CPU load, and systemd service status on a schedule, and sends email alerts when thresholds are exceeded.
-
 ## What it does
 
 - **Disk check** — alerts if root partition usage exceeds a configurable threshold (default 85%)
@@ -71,21 +62,6 @@ python scheduler.py &
 
 ```cron
 */15 * * * * /path/to/venv/bin/python /path/to/server-vibes-check/main.py
-```
-
-## Project layout
-
-```
-main.py              # orchestrates all checks, prints results, triggers alerts
-scheduler.py         # runs main() every 15 minutes using the schedule library
-config.py            # thresholds and alert email
-checks/
-  disk_usage.py      # uses shutil.disk_usage
-  cpu_usage.py       # uses psutil.cpu_percent
-  service_status.py  # uses systemctl via subprocess
-actions/
-  send_email.py      # Gmail SMTP alert sender
-  restart_service.py # sudo systemctl restart wrapper
 ```
 
 <br>
