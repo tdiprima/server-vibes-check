@@ -4,6 +4,7 @@ import time
 from main import main  # Assuming main.py has main()
 
 schedule.every(15).minutes.do(main)
+# schedule.every().hour.do(main)
 
 while True:
     schedule.run_pending()
