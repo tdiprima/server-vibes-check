@@ -10,7 +10,7 @@ def send_email(subject, message, recipient):
     sender = os.environ["GMAIL_SENDER"]
     app_password = os.environ["GMAIL_APP_PASSWORD"]
     hostname = socket.gethostname()
-    body = f"Subject: {subject}\n\nHost: {hostname}\n\n{message}"
+    body = f"Subject: [{hostname}] {subject}\n\nHost: {hostname}\n\n{message}"
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
         server.login(sender, app_password)
