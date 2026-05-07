@@ -55,10 +55,10 @@ python main.py
 **Run as a daemon (checks every 15 minutes):**
 
 ```bash
-python scheduler.py &
+./install.sh
 ```
 
-**Or use cron instead of the scheduler:**
+**Or use cron:**
 
 ```cron
 */15 * * * * /path/to/venv/bin/python /path/to/server-vibes-check/main.py
