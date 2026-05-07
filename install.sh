@@ -47,7 +47,10 @@ setup_config() {
     if [[ ! -f "${CONFIG_DIR}/env" ]]; then
         echo "Creating config directory..."
         mkdir -p "${CONFIG_DIR}"
+        chown root:root "${CONFIG_DIR}"
+        chmod 700 "${CONFIG_DIR}"
         cp "${SCRIPT_DIR}/env.example" "${CONFIG_DIR}/env"
+        chown root:root "${CONFIG_DIR}/env"
         chmod 600 "${CONFIG_DIR}/env"
         echo ""
         echo "*** IMPORTANT: Edit ${CONFIG_DIR}/env with your Gmail credentials ***"
