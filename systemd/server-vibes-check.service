@@ -1,0 +1,16 @@
+[Unit]
+Description=Server Vibes Check - system health monitor
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/server-vibes-check
+ExecStart=/opt/server-vibes-check/.venv/bin/python main.py
+EnvironmentFile=/etc/server-vibes-check/env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=server-vibes-check
+
+[Install]
+WantedBy=multi-user.target
