@@ -42,26 +42,20 @@ CHECKS = {
 }
 ```
 
-To enable email alerts, fill in your credentials in `actions/send_email.py` and uncomment the `send_email(...)` calls in `main.py`.
+## Files:
+- `systemd/server-vibes-check.service` — oneshot unit, runs main.py once
+- `systemd/server-vibes-check.timer` — fires every 15 min (1 min after boot, then every 15 min)
+- `env.example` — template for Gmail creds
+- `install.sh` — copies to /opt, runs uv sync, installs systemd units, enables timer
+- `uninstall.sh` — clean removal (preserves config)
 
-## Usage
+## Usage on server:
 
-**Run once:**
-
-```bash
-python main.py
-```
-
-**Run as a daemon (checks every 15 minutes):**
-
-```bash
-./install.sh
-```
-
-**Or use cron:**
-
-```cron
-*/15 * * * * /path/to/venv/bin/python /path/to/server-vibes-check/main.py
+```sh
+sudo bash install.sh                             # install + enable
+sudo vim /etc/server-vibes-check/env             # set Gmail creds
+sudo systemctl start server-vibes-check.service  # test run
+journalctl -u server-vibes-check -f              # watch logs
 ```
 
 <br>
