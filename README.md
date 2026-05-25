@@ -1,113 +1,105 @@
-# Server Vibes Check
+# Server Vibes Check 😎
 
-I wrote this as a practical way to explore the kind of tooling that keeps a small server healthy without needing a full monitoring stack. The problem I was solving was straightforward but real: I wanted one simple place to check disk usage, CPU pressure, and service health, then raise a flag before a small issue turned into downtime.
+A lightweight Linux server health monitor that checks disk usage, CPU load, and critical service status every 15 minutes — and emails you when something goes wrong.
 
-## What it does
+## When Your Server Is Quietly On Fire
 
-- **Disk check** — alerts if root partition usage exceeds a configurable threshold (default 85%)
-- **CPU check** — alerts if CPU usage exceeds a configurable threshold (default 75%)
-- **Service check** — queries `systemctl is-active` for each configured service and alerts if any are down
-- **Email alerts** — sends alert emails via Gmail SMTP (currently commented out in `main.py` pending credential setup)
-- **Auto-restart** — `actions/restart_service.py` can restart a downed service via `sudo systemctl restart` (not wired into the main loop by default)
-- **Scheduler** — `scheduler.py` runs the full check every 15 minutes as a long-running daemon
+Production servers fail in slow, boring ways: disk fills up at 3 AM, a service crashes after a routine update, CPU spikes and nobody notices until users complain. By the time you find out, the damage is done. Most monitoring stacks that solve this are heavy, require dedicated infrastructure, and take hours to set up.
 
-## Requirements
+## A Systemd Timer That Checks, Alerts, and Self-Heals
 
-- Python 3.11+
-- Linux with systemd (the service checks use `systemctl`)
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+`server-vibes-check` runs as a systemd timer — no daemon, no external monitoring service, no cloud dependency. Every 15 minutes it checks three things: disk usage, CPU load, and whether your critical services are active. If a threshold is crossed or a service is down, it sends you an email via Gmail SMTP with the details. If a service is down, it tries to restart it automatically and tells you whether that worked.
 
-## Install
+The email subject includes your hostname so you always know which machine is alerting. A CPU alert includes a ranked list of the top processes consuming CPU at the time, so you're not left guessing.
 
-```bash
-uv sync
+## What an Alert Looks Like
+
+```
+Subject: [web-prod-01] CPU Alert
+
+Host: web-prod-01
+
+CPU usage at 87.3%
+
+Top processes:
+  PID   1234   82.1%          www-data  python3
+  PID   5678    4.9%              root  mysqld
+  PID   9012    0.8%          www-data  gunicorn
 ```
 
-Or with pip:
+A service-down alert looks like:
 
-```bash
-pip install psutil schedule
+```
+Subject: [web-prod-01] Service Down: apache2
+
+Status: failed
+Restart attempted: SUCCESS
 ```
 
-## Configure
+## Usage
+
+**Prerequisites:** Python 3.11+, [`uv`](https://docs.astral.sh/uv/getting-started/installation/), a Linux system with systemd, and a Gmail account with an [App Password](https://support.google.com/accounts/answer/185833).
+
+**1. Clone the repo**
+
+```bash
+git clone https://github.com/yourname/server-vibes-check.git
+cd server-vibes-check
+```
+
+**2. Set your thresholds and services**
 
 Edit `config.py`:
 
 ```python
-ALERT_EMAIL = "admin@example.com"   # recipient for alerts
+ALERT_EMAIL = "you@example.com"
 CHECKS = {
-    "disk_usage": {"threshold": 85},          # percent
-    "cpu_usage":  {"threshold": 75},          # percent
-    "services":   ["apache2", "nginx", "postgresql"],
+    "disk_usage": {"threshold": 85},   # alert above 85% disk used
+    "cpu_usage":  {"threshold": 75},   # alert above 75% CPU
+    "services":   ["apache2", "fail2ban", "ssh"]
 }
 ```
 
-## Files:
-- `systemd/server-vibes-check.service` — oneshot unit, runs main.py once
-- `systemd/server-vibes-check.timer` — fires every 15 min (1 min after boot, then every 15 min)
-- `env.example` — template for Gmail creds
-- `install.sh` — copies to /opt, runs uv sync, installs systemd units, enables timer
-- `uninstall.sh` — clean removal (preserves config)
+**3. Install**
 
-## Usage on server:
-
-```sh
-sudo bash install.sh                             # install + enable
-sudo vim /etc/server-vibes-check/env             # set Gmail creds
-sudo systemctl start server-vibes-check.service  # test run
-journalctl -u server-vibes-check -f              # watch logs
-```
-
----
-
-Now when CPU exceeds the threshold, the email will look something like:
-
-```c
-  CPU usage at 92.3%
-
-  Top processes:
-    PID   1234   45.2%          root  java
-    PID   5678   23.1%        tomcat  python3
-    PID    901   12.0%        nobody  ffmpeg
-    PID    345    8.4%          root  node
-    PID    678    3.6%        deploy  gunicorn
-```
-
-### Key points:
-  - `get_top_processes()` only runs when the threshold is exceeded, so it doesn't add overhead on normal
-  checks
-  - Processes with 0% CPU are filtered out to keep the report relevant
-  - `NoSuchProcess` and `AccessDenied` are handled since processes can exit between iteration and info lookup
-
----
-
-## Update/reinstall
-Install script already handles updates — just re-run it on the server. Since it copies files to  
-`/opt/server-vibes-check` and re-syncs deps, it's idempotent. It will also skip the config step if. 
-`/etc/server-vibes-check/env` already exists.
-
-On the server:
-
-```sh
-# 1. Pull the latest code
-cd /path/to/server-vibes-check
-git pull
-
-# 2. Re-run the installer
+```bash
 sudo bash install.sh
 ```
 
-That's it. The installer copies the updated `checks/cpu_usage.py` and `main.py` into `/opt/server-vibes-check/`,  
-runs `uv sync`, reloads the systemd daemon, and restarts the timer.
+The installer copies the project to `/opt/server-vibes-check`, sets up a credentials file at `/etc/server-vibes-check/env` (mode 600, root-only), enables the systemd timer, and starts it immediately.
 
-To verify it's working right away:
+**4. Add your Gmail credentials**
 
-```sh
-# Run a one-shot test
+```bash
+sudo nano /etc/server-vibes-check/env
+```
+
+```
+GMAIL_SENDER=you@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+```
+
+**5. Verify it's running**
+
+```bash
+# Check timer schedule
+systemctl list-timers server-vibes-check.timer
+
+# Trigger a manual run
 sudo systemctl start server-vibes-check.service
 
-# Check the output
-journalctl -u server-vibes-check --no-pager -n 20
+# Stream logs
+journalctl -u server-vibes-check -f
 ```
+
+**Uninstall**
+
+```bash
+sudo bash uninstall.sh
+```
+
+---
+
+Built with [`psutil`](https://psutil.readthedocs.io/), [`loguru`](https://loguru.readthedocs.io/), and standard library `smtplib`. Runs on Ubuntu, RHEL, and Rocky Linux.
 
 <br>
