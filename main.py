@@ -16,10 +16,16 @@ def main():
         # logger.warning("ALERT: Disk usage exceeds threshold!")
 
     # CPU Check
-    cpu_alert, cpu_percent = check_cpu_usage(CHECKS["cpu_usage"]["threshold"])
+    cpu_alert, cpu_percent, top_procs = check_cpu_usage(CHECKS["cpu_usage"]["threshold"])
     logger.info("CPU Usage: {}% (Threshold: {}%)", cpu_percent, CHECKS["cpu_usage"]["threshold"])
     if cpu_alert:
-        send_email("CPU Alert", f"CPU usage at {cpu_percent}%", ALERT_EMAIL)
+        from checks.cpu_usage import format_top_processes
+        proc_report = format_top_processes(top_procs)
+        send_email(
+            "CPU Alert",
+            f"CPU usage at {cpu_percent}%\n\nTop processes:\n{proc_report}",
+            ALERT_EMAIL,
+        )
         # logger.warning("ALERT: CPU usage exceeds threshold!")
 
     # Service Check

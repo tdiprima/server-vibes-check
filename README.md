@@ -58,4 +58,23 @@ sudo systemctl start server-vibes-check.service  # test run
 journalctl -u server-vibes-check -f              # watch logs
 ```
 
+Now when CPU exceeds the threshold, the email will look something like:
+
+```c
+  CPU usage at 92.3%
+
+  Top processes:
+    PID   1234   45.2%          root  java
+    PID   5678   23.1%        tomcat  python3
+    PID    901   12.0%        nobody  ffmpeg
+    PID    345    8.4%          root  node
+    PID    678    3.6%        deploy  gunicorn
+```
+
+### Key points:
+  - `get_top_processes()` only runs when the threshold is exceeded, so it doesn't add overhead on normal
+  checks
+  - Processes with 0% CPU are filtered out to keep the report relevant
+  - `NoSuchProcess` and `AccessDenied` are handled since processes can exit between iteration and info lookup
+
 <br>
