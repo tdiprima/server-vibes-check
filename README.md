@@ -58,6 +58,8 @@ sudo systemctl start server-vibes-check.service  # test run
 journalctl -u server-vibes-check -f              # watch logs
 ```
 
+---
+
 Now when CPU exceeds the threshold, the email will look something like:
 
 ```c
@@ -76,5 +78,36 @@ Now when CPU exceeds the threshold, the email will look something like:
   checks
   - Processes with 0% CPU are filtered out to keep the report relevant
   - `NoSuchProcess` and `AccessDenied` are handled since processes can exit between iteration and info lookup
+
+---
+
+## Update/reinstall
+Install script already handles updates — just re-run it on the server. Since it copies files to  
+`/opt/server-vibes-check` and re-syncs deps, it's idempotent. It will also skip the config step if. 
+`/etc/server-vibes-check/env` already exists.
+
+On the server:
+
+```sh
+# 1. Pull the latest code
+cd /path/to/server-vibes-check
+git pull
+
+# 2. Re-run the installer
+sudo bash install.sh
+```
+
+That's it. The installer copies the updated `checks/cpu_usage.py` and `main.py` into `/opt/server-vibes-check/`,  
+runs `uv sync`, reloads the systemd daemon, and restarts the timer.
+
+To verify it's working right away:
+
+```sh
+# Run a one-shot test
+sudo systemctl start server-vibes-check.service
+
+# Check the output
+journalctl -u server-vibes-check --no-pager -n 20
+```
 
 <br>
