@@ -1,4 +1,4 @@
-# Auto-fixes down services. Needs sudo. 🛠️
+# Auto-fixes down services. Needs sudo. 🛠
 import subprocess
 
 def restart_service(service_name):
