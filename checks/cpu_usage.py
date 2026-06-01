@@ -27,6 +27,9 @@ def format_top_processes(processes):
     return "\n".join(lines)
 
 def check_cpu_usage(threshold=80):
+    # Prime per-process CPU counters so the second call returns real values
+    for proc in psutil.process_iter(["cpu_percent"]):
+        pass
     usage = psutil.cpu_percent(interval=1)
     is_alert = usage > threshold
     top_procs = get_top_processes() if is_alert else []
